@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=640, user-scalable=no">
+	<title>踩白块</title>
+	<style>
+		html, body {
+			height: 100%
+		}
+		body {
+			position: relative;
+			width: 640px;
+			margin: 0 auto;
+			text-align: center;
+			font: 32px Microsoft Yahei;
+			background: #000;
+			color: #333;
+
+			text-rendering: optimizeLegibility;
+			-webkit-font-smoothing: antialiased;
+
+			-webkit-user-select: none;
+			user-select: none;
+		}
+		header, header span, nav, section, article {
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+		header, article {
+			transition: opacity .3s ease-out;
+			will-change: opacity;
+		}
+		header {
+			z-index: 3;
+			width: 100%;
+			height: 100%;
+			background: #000;
+		}
+		.hide {
+			pointer-events: none;
+			opacity: 0;
+		}
+
+		header span {
+			overflow: hidden;
+			right: 0;
+			bottom: 0;
+			width: 200px;
+			height: 120px;
+			margin: auto;
+			line-height: 120px;
+			background: #35b5eb;
+			color: #fff;
+		}
+
+		span strong {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+		section {
+			overflow: hidden;
+			width: 100%;
+			height: 960px;
+		}
+		nav {
+			width: 100%;
+			height: 80px;
+			line-height: 80px;
+			background: rgba(0, 0, 0, .5);
+			color: #fff;
+		}
+		nav mark {
+			display: inline-block;
+			width: 80px;
+			margin: 0 30px 0 0;
+			background: none;
+			color: #FF0;
+		}
+		div {
+			float: left;
+			width: 160px;
+			height: 160px;
+			line-height: 160px;
+			box-shadow: 0 0 1px #ff0;
+			color: #fff;
+
+			-webkit-transition: .5s linear;
+			transition: .5s linear;
+
+			will-change: transform, opacity;
+		}
+		.z1 {
+			z-index: 1;
+		}
+
+		.score {
+			background: #fff;
+			color: #000;
+		}
+		.blood {
+			background: #f00;
+			color: #0f0
+		}
+		.bomb {
+			background: #000;
+		}
+		.doubt {
+			background: #0f0;
+			color: #00f;
+		}
+
+		.score:after {
+			content: '';
+		}
+		.blood:after {
+			content: '加血';
+		}
+		.bomb:after {
+			content: '炸弹';
+		}
+		.doubt:after {
+			content: '?';
+		}
+
+		.has-score, .has-addscore, .has-cutscore {
+			background: #ccc;
+			color: #f0f;
+		}
+		.has-blood, .has-bomb {
+			opacity: .5;
+		}
+		.has-blood {
+			-webkit-transform: rotateY(360deg);
+			transform: rotateY(360deg);
+		}
+		.has-bomb {
+			-webkit-transform: rotateX(360deg);
+			transform: rotateX(360deg);
+		}
+		.has-addscore, .has-cutscore {
+			-webkit-transform: rotate(360deg);
+			transform: rotate(360deg);
+		}
+
+		article {
+			width: 100%;
+			min-height: 100%;
+			padding: 0 1em;
+			background: #fff;
+			font-size: .75em;
+			text-align: left;
+			box-sizing: border-box;
+		}
+		aside {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			z-index: 2;
+			width: 140px;
+			height: 80px;
+			line-height: 80px;
+			background: #35b5eb;
+			border-radius: 3px;
+		}
+		h2 {
+			height: 60px;
+			line-height: 60px;
+			margin: .6em 0;
+		}
+		p {
+			text-indent: 2em;
+			margin: .8em 0;
+		}
+	</style>
+	<script>
+		var phoneScale = parseInt(window.screen.width) / 640;
+
+		if (/Android (\d+\.\d+)/.test(navigator.userAgent)) {
+			var version = parseFloat(RegExp.$1);
+
+			2.3 < version ? document.write('<meta name="viewport" content="width=640, minimum-scale = ' + phoneScale + ", maximum-scale = " + phoneScale + ', target-densitydpi=device-dpi">') : document.write('<meta name="viewport" content="width=640, target-densitydpi=device-dpi">');
+		} else document.write('<meta name="viewport" content="width=640, user-scalable=no, target-densitydpi=device-dpi">');
+	</script>
+</head>
+
+<body>
+	<header>
+		<span class="z1" onclick="readyGo()"><strong id="rotate">加载中...</strong></span>
+		<span id="restart">重新再来</span>
+
+		<aside onclick="showAside(this)">说明</aside>
+
+		<article class="z1 hide">
+			<h2>游戏规则:</h2>
+			<p>1. 点击'准备游戏'或'重新再来', 准备好后继续触摸屏幕开始游戏</p>
+			<p>2. 从开始游戏至180秒后结束游戏, 当生命值为0时结束游戏</p>
+			<p>3. 踩白块(40%)随机增加1到5分</p>
+			<p>4. 踩黑块(40%)减去1点生命值</p>
+			<p>5. 踩红块(5%)增加1点生命值</p>
+			<p>6. 踩绿块(15%)对半概率随机增加或减去1到50分</p>
+			<h2>游戏速度:</h2>
+			<p>1. 180秒到170秒以'1格子/秒'匀速运动</p>
+			<p>2. 游戏170秒到120秒匀加速至'2格子/秒'</p>
+			<p>3. 120秒到60秒以'2格子/秒'匀速运动</p>
+			<p>4. 60秒到30秒匀加速至'5格子/秒'</p>
+			<p>5. 30秒到20秒以'5格子/秒'匀速运动</p>
+			<p>6. 20秒至10秒匀减速至'2格子/秒'</p>
+			<p>7. 10秒至5秒以'2格子/秒'匀速运动</p>
+			<p>8. 5秒继续匀减速至游戏结束</p>
+		</article>
+	</header>
+
+	<nav class="z1">
+		生命:<mark id="blood"></mark>时间:<mark id="time"></mark>得分:<mark id="score">0</mark>
+	</nav>
+
+	<section>
+		<div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+	</section>
+
+	<script>
+		var thisClass,
+			ts5s = 'transition: .5s linear;',
+			hasReady = false,	// 允许游戏
+			gameTime = 180,		// 游戏时间
+			timeTimer = null,	// 游戏时间计时器
+			gameSpeed = 1e3,	// 初始游戏速度
+			gameTimer = null,	// 游戏速度计时器
+			gameProba = 400,	// 炸弹占的千分比
+			gameBlood = 3,		// 初始血量
+			gameScore = 0;		// 初始得分
+
+		var section = document.querySelector('section'),
+			header = document.querySelector('header'),
+			article = document.querySelector('article');
+
+		blood.innerHTML = gameBlood;
+		time.innerHTML = gameTime;
+		score.innerHTML = gameScore;
+
+		Object.values(section.children).forEach(function (v) {
+			randBlock();
+			v.className = thisClass;
+		});
+
+		function randBlock() {
+			var randClass = Math.floor(Math.random() * 1e3);
+
+			if (randClass < gameProba) {
+				thisClass = 'bomb';
+			} else if (randClass < gameProba + 50) {
+				thisClass = 'blood';
+			} else if (randClass < gameProba + 200) {
+				thisClass = 'doubt';
+			} else {
+				thisClass = 'score';
+			}
+		}
+
+		function readyGo() {
+			if (gameTimer) {
+				confirm('无法再上传积分, 是否重新游戏!') && location.reload();
+			} else {
+				header.className = 'hide';
+				hasReady = true;
+			}
+		}
+
+		function changeSpeed() {
+			clearInterval(gameTimer);
+			gameTimer = setInterval(gameGo, gameSpeed);
+		}
+
+		function css(e) {
+			return '-webkit-' + e + '-moz-' + e + '-ms-' + e + '-o-' + e + e;
+		}
+
+		function showAside(ts) {
+			if (article.className === 'z1') {
+				ts.innerHTML = '说明';
+				article.className = 'z1 hide';
+			} else {
+				ts.innerHTML = '关闭';
+				article.className = 'z1';
+			}
+		}
+
+		function gameGo() {
+			gameBlood <= 0 && gameOver();
+
+			for (var i = 0; i < 4; i++) {
+				randBlock();
+
+				section.insertAdjacentHTML('afterBegin', '<div class=' + thisClass + '></div>');
+
+				var _div = section.querySelectorAll('div');
+
+				section.removeChild(_div[_div.length - 1]);
+			}
+		}
+
+		function gameOver() {
+			hasReady = false;
+			rotate.innerHTML = '游戏结束';
+			header.className = '';
+
+			clearInterval(gameTimer);
+			clearInterval(timeTimer);
+
+			setTimeout(function() {
+				rotate.style.cssText = css(ts5s) + css('transform: translate3d(0, 50%, 0);') + 'opacity: 0;';
+			}, 1e3);
+
+			setTimeout(function() {
+				rotate.innerHTML = gameScore + '分';
+				rotate.style.cssText = css('transform: translate3d(0, -50%, 0);');
+			}, 1500);
+
+			setTimeout(function() {
+				rotate.style.cssText = css(ts5s) + css('transform: translate3d(0, 0, 0);') + 'opacity: 1;';
+			}, 1530);
+
+			setTimeout(function() {
+				alert('已成功上传积分(' + gameScore + ')');
+			}, 2e3);
+		}
+
+		function gameStart(event) {
+			if (!hasReady) return;
+
+			if (!gameTimer) {
+				gameTimer = setInterval(gameGo, gameSpeed);
+
+				timeTimer = setInterval(function() {
+					gameTime--;
+					time.innerHTML = gameTime;
+
+					gameTime <= 0 && gameOver();
+
+					if (gameTime < 170 && gameTime > 120 || gameTime < 60 && gameTime > 30) {
+						gameSpeed -= 10;
+						changeSpeed();
+					}
+
+					if (gameTime < 20 && gameTime > 10 || gameTime < 5) {
+						gameSpeed += 30;
+						changeSpeed();
+					}
+				}, 1e3);
+			};
+
+			var thisTarget = event.target,
+				targetClass = thisTarget.className;
+
+			if (targetClass === 'score') {
+				thisTarget.className = 'score has-score';
+				thisTarget.innerHTML = '+2';
+				gameScore += 2;
+				score.innerHTML = gameScore;
+			} else if (targetClass === 'bomb') {
+				thisTarget.className = 'bomb has-bomb';
+				gameBlood--;
+				gameBlood < 0 && (gameBlood = 0);
+				blood.innerHTML = gameBlood;
+			} else if (targetClass === 'blood') {
+				thisTarget.className = 'blood has-blood';
+				gameBlood++;
+				blood.innerHTML = gameBlood;
+			} else if (targetClass === 'doubt') {
+				var randDoubt = Math.floor(Math.random() * 2);
+
+				if (randDoubt) {
+					thisTarget.className = 'has-addscore';
+					thisTarget.innerHTML = '+' + Math.ceil(Math.random() * 10);
+					gameScore += parseInt(thisTarget.innerHTML.replace('+', ''));
+					score.innerHTML = gameScore;
+				} else {
+					thisTarget.className = 'has-cutscore';
+					thisTarget.innerHTML = '-' + Math.ceil(Math.random() * 10);
+					gameScore -= parseInt(thisTarget.innerHTML.replace('-', ''));
+
+					gameScore < 0 && (gameScore = 0);
+					score.innerHTML = gameScore;
+				}
+			}
+		}
+
+		window.addEventListener('load', function() {
+			rotate.style.cssText = css(ts5s) + css('transform: rotateY(360deg) scale3d(1.2, 1.2, 1.2);') + 'color: #333;';
+			rotate.innerHTML = '准备游戏';
+		});
+
+		document.body.addEventListener('touchmove', function (event) {
+			event.preventDefault();
+		}, {passive: false});
+
+		'ontouchstart' in window ? document.addEventListener('touchstart', function(event) {
+			gameStart(event);
+		}) : document.body.onclick = function (event) {
+			gameStart(event);
+		}
+	</script>
+</body>
+</html>
