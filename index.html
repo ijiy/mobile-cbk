@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hans-CN">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=640, user-scalable=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+	<meta name="apple-mobile-web-app-capable" content="yes">
 	<title>踩白块</title>
 	<style>
 		html, body {
 			height: 100%
 		}
 		body {
+			overflow: hidden;
 			position: relative;
 			width: 640px;
 			margin: 0 auto;
@@ -146,9 +149,22 @@
 			transform: rotate(360deg);
 		}
 
+		::-webkit-scrollbar {
+			width: 6px;
+			height: 6px;
+		}
+		::-webkit-scrollbar-thumb {
+			border-radius: 3px;
+			background: rgba(144, 147, 153, .3);
+		}
+		::-webkit-scrollbar-track {
+			background: none;
+		}
+
 		article {
+			overflow: auto;
 			width: 100%;
-			min-height: 100%;
+			height: 100%;
 			padding: 0 1em;
 			background: #fff;
 			font-size: .75em;
@@ -263,7 +279,7 @@
 
 		function readyGo() {
 			if (gameTimer) {
-				confirm('无法再上传积分, 是否重新游戏!') && location.reload();
+				location.reload();
 			} else {
 				header.className = 'hide';
 				hasReady = true;
@@ -323,10 +339,6 @@
 			setTimeout(function() {
 				rotate.style.cssText = css(ts5s) + css('transform: translate3d(0, 0, 0);') + 'opacity: 1;';
 			}, 1530);
-
-			setTimeout(function() {
-				alert('已成功上传积分(' + gameScore + ')');
-			}, 2e3);
 		}
 
 		function gameStart(event) {
@@ -351,7 +363,7 @@
 						changeSpeed();
 					}
 				}, 1e3);
-			};
+			}
 
 			var thisTarget = event.target,
 				targetClass = thisTarget.className;
