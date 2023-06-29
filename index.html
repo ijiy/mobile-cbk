@@ -34,6 +34,7 @@
             font: .16rem \5FAE\8F6F\96C5\9ED1;
             background: #2D404F;
             text-rendering: optimizeLegibility;
+	        user-select: none;
 
             -webkit-font-smoothing: antialiased;
             -webkit-tap-highlight-color: transparent;
@@ -432,6 +433,19 @@
 		}) : document.body.onclick = function (event) {
 			gameStart(event);
 		}
+
+		let lastTouchEnd = 0;
+		let lastTime;
+
+		document.addEventListener('touchend', function (event) {
+			lastTime = Date.now();
+
+			lastTime - lastTouchEnd <= 300 && event.preventDefault();
+
+			lastTouchEnd = lastTime;
+		}, {
+			passive: false,
+		});
 	</script>
 </body>
 </html>
