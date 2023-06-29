@@ -193,13 +193,9 @@
 		}
 	</style>
 	<script>
-		var phoneScale = parseInt(window.screen.width) / 640;
+		const phoneScale = parseInt(window.screen.width) / 640;
 
-		if (/Android (\d+\.\d+)/.test(navigator.userAgent)) {
-			var version = parseFloat(RegExp.$1);
-
-			2.3 < version ? document.write('<meta name="viewport" content="width=640, minimum-scale = ' + phoneScale + ", maximum-scale = " + phoneScale + ', target-densitydpi=device-dpi">') : document.write('<meta name="viewport" content="width=640, target-densitydpi=device-dpi">');
-		} else document.write('<meta name="viewport" content="width=640, user-scalable=no, target-densitydpi=device-dpi">');
+		/Mobi|Android|iPhone/i.test(window.navigator.userAgent) && document.write('<meta name="viewport" content="width=640, minimum-scale = ' + phoneScale + ", maximum-scale = " + phoneScale + ', user-scalable=no">')
 	</script>
 </head>
 
